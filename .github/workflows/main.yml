@@ -1,4 +1,4 @@
-          name: RDP-Ubuntu
+name: RDP-Ubuntu
 
 on:
   workflow_dispatch:
@@ -14,7 +14,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xrdp xfce4 xfce4-goodies dbus-x11 x11-xserver-utils
           
-          # Crear usuario RDP con contraseña aleatoria
           USERNAME="rdpuser"
           PASSWORD=$(tr -dc 'A-Za-z0-9!@#$%^&*' < /dev/urandom | head -c 16)
           sudo useradd -m -s /bin/bash $USERNAME
@@ -22,7 +21,6 @@ jobs:
           
           echo "RDP_CREDS=User: $USERNAME | Password: $PASSWORD" >> $GITHUB_ENV
           
-          # Configurar XRDP para usar XFCE
           echo "startxfce4" | sudo tee /home/$USERNAME/.xsession
           sudo systemctl enable xrdp
           sudo systemctl restart xrdp
@@ -32,7 +30,6 @@ jobs:
           curl -fsSL https://tailscale.com/install.sh | sh
           sudo tailscale up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=gh-ubuntu-$GITHUB_RUN_ID
           
-          # Obtener IP de Tailscale
           TS_IP=$(tailscale ip -4 | head -n 1)
           echo "TAILSCALE_IP=$TS_IP" >> $GITHUB_ENV
 
@@ -49,9 +46,7 @@ jobs:
           echo "Password: $(echo $RDP_CREDS)"
           echo "==================="
           
-          # Mantener vivo el runner
           while true; do
             echo "[$(date)] RDP Active..."
             sleep 300
           done
-
