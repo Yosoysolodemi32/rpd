@@ -9,14 +9,11 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Update and Install XRDP + Desktop
+      - name: Install Full Xubuntu Desktop + XRDP
         run: |
           sudo apt-get update
-          # Escritorio XFCE básico
-          sudo apt-get install -y xrdp xfce4 xfce4-goodies dbus-x11 x11-xserver-utils
-
-          # OPCIONAL: instalar escritorio completo (más pesado, pero más estable)
-          # sudo apt-get install -y xubuntu-desktop
+          # Instalar escritorio completo Xubuntu + XRDP
+          sudo apt-get install -y xubuntu-desktop xrdp dbus-x11 x11-xserver-utils
 
           # Crear usuario RDP con contraseña aleatoria
           USERNAME="rdpuser"
@@ -26,32 +23,20 @@ jobs:
           
           echo "RDP_CREDS=User: $USERNAME | Password: $PASSWORD" >> $GITHUB_ENV
 
-          # Configurar XFCE como escritorio por defecto
-          echo "startxfce4" | sudo tee /home/$USERNAME/.xsession
+          # Configurar XFCE como sesión por defecto
+          echo "xfce4-session" | sudo tee /home/$USERNAME/.xsession
           sudo chown $USERNAME:$USERNAME /home/$USERNAME/.xsession
 
+          # Ajustar XRDP para lanzar XFCE
+          echo "xfce4-session" | sudo tee /etc/skel/.xsession
+          echo "xfce4-session" | sudo tee /etc/skel/.Xclients
+          sudo chmod +x /etc/skel/.Xclients
+
+          # Reiniciar servicios (ignorar errores si systemd falla en GHA)
           sudo systemctl enable xrdp || true
           sudo systemctl restart xrdp || true
-
-      - name: Fix XRDP session for XFCE
-        run: |
-          # Paquetes extra para evitar "failsafe session"
-          sudo apt-get install -y xfce4-session xubuntu-icon-theme
-
-          # Configuración global y usuario
-          echo "startxfce4" | sudo tee /etc/skel/.xsession
-          echo "startxfce4" | sudo tee /home/rdpuser/.xsession
-          sudo chown rdpuser:rdpuser /home/rdpuser/.xsession
-
-          echo "xfce4-session" | sudo tee /etc/skel/.Xclients
-          echo "xfce4-session" | sudo tee /home/rdpuser/.Xclients
-          sudo chmod +x /home/rdpuser/.Xclients
-          sudo chown rdpuser:rdpuser /home/rdpuser/.Xclients
-
-          # Reiniciar servicios (ignorar errores en runners)
-          sudo systemctl restart dbus || true
-          sudo systemctl restart xrdp || true
           sudo service xrdp restart || true
+          sudo systemctl restart dbus || true
 
       - name: Install Tailscale
         run: |
@@ -78,3 +63,4 @@ jobs:
             echo "[$(date)] RDP Active..."
             sleep 300
           done
+
