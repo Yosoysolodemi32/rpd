@@ -12,7 +12,11 @@ jobs:
       - name: Update and Install XRDP + Desktop
         run: |
           sudo apt-get update
+          # Escritorio XFCE básico
           sudo apt-get install -y xrdp xfce4 xfce4-goodies dbus-x11 x11-xserver-utils
+
+          # OPCIONAL: instalar escritorio completo (más pesado, pero más estable)
+          # sudo apt-get install -y xubuntu-desktop
 
           # Crear usuario RDP con contraseña aleatoria
           USERNAME="rdpuser"
@@ -26,15 +30,15 @@ jobs:
           echo "startxfce4" | sudo tee /home/$USERNAME/.xsession
           sudo chown $USERNAME:$USERNAME /home/$USERNAME/.xsession
 
-          sudo systemctl enable xrdp
-          sudo systemctl restart xrdp
+          sudo systemctl enable xrdp || true
+          sudo systemctl restart xrdp || true
 
       - name: Fix XRDP session for XFCE
         run: |
-          # Instalar paquetes adicionales para evitar "failsafe session"
+          # Paquetes extra para evitar "failsafe session"
           sudo apt-get install -y xfce4-session xubuntu-icon-theme
 
-          # Configuración global y para el usuario
+          # Configuración global y usuario
           echo "startxfce4" | sudo tee /etc/skel/.xsession
           echo "startxfce4" | sudo tee /home/rdpuser/.xsession
           sudo chown rdpuser:rdpuser /home/rdpuser/.xsession
@@ -44,9 +48,10 @@ jobs:
           sudo chmod +x /home/rdpuser/.Xclients
           sudo chown rdpuser:rdpuser /home/rdpuser/.Xclients
 
-          # Reiniciar servicios
-          sudo systemctl restart dbus
-          sudo systemctl restart xrdp
+          # Reiniciar servicios (ignorar errores en runners)
+          sudo systemctl restart dbus || true
+          sudo systemctl restart xrdp || true
+          sudo service xrdp restart || true
 
       - name: Install Tailscale
         run: |
